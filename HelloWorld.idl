@@ -1,0 +1,7 @@
+struct HelloWorld
+{
+	unsigned long index;
+	uint16 from;
+	uint16 to;
+	sequence<char> message;
+};
