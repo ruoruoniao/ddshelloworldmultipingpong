@@ -27,7 +27,8 @@
 #include <fastrtps/subscriber/SampleInfo.h>
 #include <fastdds/dds/core/status/SubscriptionMatchedStatus.hpp>
 
-class HelloWorldSubscriber {
+class HelloWorldSubscriber
+{
 public:
 
     HelloWorldSubscriber();
@@ -39,7 +40,7 @@ public:
             bool use_env);
 
     //!RUN the subscriber
-    static void run(const std::function<void(uint16_t, uint16_t, uint64_t, std::vector<char>)> &callback);
+    void run();
 
     //!Run the subscriber until number samples have been received.
     void run(
@@ -47,32 +48,38 @@ public:
 
 private:
 
-    eprosima::fastdds::dds::DomainParticipant *participant_;
+    eprosima::fastdds::dds::DomainParticipant* participant_;
 
-    eprosima::fastdds::dds::Subscriber *subscriber_;
+    eprosima::fastdds::dds::Subscriber* subscriber_;
 
-    eprosima::fastdds::dds::Topic *topic_;
+    eprosima::fastdds::dds::Topic* topic_;
+    eprosima::fastdds::dds::Topic* topic1_;
 
-    eprosima::fastdds::dds::DataReader *reader_;
+    eprosima::fastdds::dds::DataReader* reader_;
+    eprosima::fastdds::dds::DataReader* reader1_;
 
     eprosima::fastdds::dds::TypeSupport type_;
 
-    class SubListener : public eprosima::fastdds::dds::DataReaderListener {
+    class SubListener : public eprosima::fastdds::dds::DataReaderListener
+    {
     public:
 
         SubListener()
-                : matched_(0), samples_(0) {
+            : matched_(0)
+            , samples_(0)
+        {
         }
 
-        ~SubListener() override {
+        ~SubListener() override
+        {
         }
 
         void on_data_available(
-                eprosima::fastdds::dds::DataReader *reader) override;
+                eprosima::fastdds::dds::DataReader* reader) override;
 
         void on_subscription_matched(
-                eprosima::fastdds::dds::DataReader *reader,
-                const eprosima::fastdds::dds::SubscriptionMatchedStatus &info) override;
+                eprosima::fastdds::dds::DataReader* reader,
+                const eprosima::fastdds::dds::SubscriptionMatchedStatus& info) override;
 
         HelloWorld hello_;
 
@@ -80,7 +87,7 @@ private:
 
         uint32_t samples_;
     }
-            listener_;
+    listener_, listener1_;
 };
 
 #endif /* HELLOWORLDSUBSCRIBER_H_ */

@@ -27,20 +27,6 @@
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 
 #include <thread>
-#include "unordered_map"
-
-#if defined(Server)
-uint16_t current = 3;
-uint16_t forward = 0;
-#elif defined(Hub)
-uint16_t current = 2;
-uint16_t forward = 3;
-#elif defined(Client)
-uint16_t current = 1;
-uint16_t forward = 2;
-#endif
-
-std::unordered_map<uint64_t, std::atomic<uint16_t>> listenedCount = {};
 
 using namespace eprosima::fastdds::dds;
 
@@ -52,17 +38,20 @@ HelloWorldPublisher::HelloWorldPublisher()
 bool HelloWorldPublisher::init(
         bool use_env) {
     hello_.index(0);
-    hello_.from(current);
-    hello_.to(forward);
-    for (int i = 0; i < 1024 * 1024; ++i) {
-        hello_.message().emplace_back(i % 255);
+    for (int i = 0; i < 100000; ++i) {
+        hello_.message().append("HelloWorld");
     }
     DomainParticipantQos pqos = PARTICIPANT_QOS_DEFAULT;
-    pqos.wire_protocol().builtin.discovery_config.leaseDuration = eprosima::fastrtps::c_TimeInfinite;
-    pqos.transport().use_builtin_transports = true;
-    pqos.transport().send_socket_buffer_size = 20 * 1024 * 1024;
+    pqos.name("Participant_pub");
     pqos.transport().listen_socket_buffer_size = 20 * 1024 * 1024;
-    pqos.name("Participant_pub" + std::to_string(current));
+    pqos.transport().send_socket_buffer_size = 20 * 1024 * 1024;
+    static const char *flow_controller_name = "example_flow_controller";
+    auto flow_control_300k_per_sec = std::make_shared<eprosima::fastdds::rtps::FlowControllerDescriptor>();
+    flow_control_300k_per_sec->name = flow_controller_name;
+    flow_control_300k_per_sec->scheduler = eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO;
+    flow_control_300k_per_sec->max_bytes_per_period = 62.5 * 1000 * 100;
+    flow_control_300k_per_sec->period_ms = 100;
+    pqos.flow_controllers().push_back(flow_control_300k_per_sec);
     auto factory = DomainParticipantFactory::get_instance();
 
     if (use_env) {
@@ -106,15 +95,27 @@ bool HelloWorldPublisher::init(
             "HelloWorld",
             tqos);
 
+//    topic1_ = participant_->create_topic(
+//            "HelloWorldTopic",
+//            "HelloWorld",
+//            tqos);
+
     if (topic_ == nullptr) {
         return false;
     }
 
     // CREATE THE WRITER
     DataWriterQos wqos = DATAWRITER_QOS_DEFAULT;
-    wqos.reliability().kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
+    wqos.reliability().kind = eprosima::fastdds::dds::ReliabilityQosPolicyKind::RELIABLE_RELIABILITY_QOS;
     wqos.durability().kind = eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
     wqos.endpoint().history_memory_policy = eprosima::fastrtps::rtps::DYNAMIC_REUSABLE_MEMORY_MODE;
+    eprosima::fastrtps::rtps::Locator_t new_multicast_locator;
+    eprosima::fastrtps::rtps::IPLocator::setIPv4(new_multicast_locator, "239.255.0.4");
+    new_multicast_locator.port = 8012;
+    new_multicast_locator.kind = LOCATOR_KIND_UDPv4;
+    wqos.endpoint().multicast_locator_list.push_back(new_multicast_locator);
+    wqos.publish_mode().kind = ASYNCHRONOUS_PUBLISH_MODE;
+    wqos.publish_mode().flow_controller_name = "example_flow_controller";
     if (use_env) {
         publisher_->get_default_datawriter_qos(wqos);
     }
@@ -123,6 +124,25 @@ bool HelloWorldPublisher::init(
             topic_,
             wqos,
             &listener_);
+
+    wqos = DATAWRITER_QOS_DEFAULT;
+    wqos.reliability().kind = eprosima::fastdds::dds::ReliabilityQosPolicyKind::RELIABLE_RELIABILITY_QOS;
+    wqos.durability().kind = eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
+    wqos.endpoint().history_memory_policy = eprosima::fastrtps::rtps::DYNAMIC_REUSABLE_MEMORY_MODE;
+    wqos.publish_mode().kind = ASYNCHRONOUS_PUBLISH_MODE;
+    wqos.publish_mode().flow_controller_name = "example_flow_controller";
+    new_multicast_locator = {};
+    eprosima::fastrtps::rtps::IPLocator::setIPv4(new_multicast_locator, "239.255.0.4");
+    new_multicast_locator.port = 8012;
+    new_multicast_locator.kind = LOCATOR_KIND_UDPv4;
+    wqos.endpoint().multicast_locator_list.push_back(new_multicast_locator);
+    wqos.publish_mode().kind = ASYNCHRONOUS_PUBLISH_MODE;
+    wqos.publish_mode().flow_controller_name = "example_flow_controller";
+
+    writer1_ = publisher_->create_datawriter(
+            topic_,
+            wqos,
+            &listener1_);
 
     if (writer_ == nullptr) {
         return false;
@@ -165,23 +185,18 @@ void HelloWorldPublisher::runThread(
         uint32_t sleep) {
     if (samples == 0) {
         while (!stop_) {
-            if (current == 1) {
-                if (publish(false)) {
-                    std::cout << "Message with index: " << hello_.index()
-                              << " SENT" << std::endl;
-                }
-                while (listenedCount[hello_.index()] != 2) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
-                }
-                listenedCount.erase(hello_.index());
+            if (publish(false)) {
+                std::cout << "Message: " << " with index: " << hello_.index()
+                          << " SENT" << std::endl;
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
         }
     } else {
         for (uint32_t i = 0; i < samples; ++i) {
             if (!publish()) {
                 --i;
             } else {
-                std::cout << "Message with index: " << hello_.index()
+                std::cout << "Message: " << " with index: " << hello_.index()
                           << " SENT" << std::endl;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
@@ -204,55 +219,13 @@ void HelloWorldPublisher::run(
     thread.join();
 }
 
-void HelloWorldPublisher::listen(uint16_t from, uint16_t to, uint64_t index, const std::vector<char> &data) {
-    std::string s = "Receive";
-    if (from != current) {
-        std::string type = "data";
-        if (data.size() == 7){
-            type = "receipt";
-        }
-        std::cout << "Message " << index << ", from " << from << ", to " << to << " " << type << " RECEIVED" << std::endl;
-        if (data.size() != 7) {
-            std::thread thread([this](uint64_t index, uint16_t from, const std::string &s) {
-                HelloWorld helloWorld;
-                helloWorld.index() = index;
-                helloWorld.to() = from;
-                helloWorld.from() = current;
-                helloWorld.message() = {s.begin(), s.end()};
-                writer_->write(&helloWorld);
-                std::cout << "Message with index: " << index << " receipt SENT" << std::endl;
-            }, index, from, s);
-            thread.detach();
-        } else if (to == current){
-            listenedCount[index]++;
-        }
-    }
-
-    if (from == 1 && current != 1 && forward != 0) {
-        std::thread thread([this](uint64_t index, const std::vector<char> &data) {
-            HelloWorld helloWorld;
-            helloWorld.index() = index;
-            helloWorld.to() = forward;
-            helloWorld.from() = current;
-            helloWorld.message() = data;
-            writer_->write(&helloWorld);
-            std::cout << "Message with index: " << index << " data SENT" << std::endl;
-            listenedCount[index] = 0;
-            while (listenedCount[index] != 2) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-            listenedCount.erase(index);
-        }, index, data);
-        thread.detach();
-    }
-}
-
 bool HelloWorldPublisher::publish(
         bool waitForListener) {
     if (listener_.firstConnected_ || !waitForListener || listener_.matched_ > 0) {
         hello_.index(hello_.index() + 1);
-        listenedCount[hello_.index()] = 0;
         writer_->write(&hello_);
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        writer1_->write(&hello_);
         return true;
     }
     return false;

@@ -164,23 +164,153 @@ int main(
         int argc,
         char** argv)
 {
+    int columns;
+
+#if defined(_WIN32)
+    char* buf = nullptr;
+    size_t sz = 0;
+    if (_dupenv_s(&buf, &sz, "COLUMNS") == 0 && buf != nullptr)
+    {
+        columns = strtol(buf, nullptr, 10);
+        free(buf);
+    }
+    else
+    {
+        columns = 80;
+    }
+#else
+    columns = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
+#endif // if defined(_WIN32)
+
     std::cout << "Starting " << std::endl;
 
     int type = 1;
-    uint32_t count = 0;
-    uint32_t sleep = 1;
+    uint32_t count = 10;
+    uint32_t sleep = 0;
+    bool use_environment_qos = false;
 
+    argc -= (argc > 0);
+    argv += (argc > 0); // skip program name argv[0] if present
+    option::Stats stats(true, usage, argc, argv);
+    std::vector<option::Option> options(stats.options_max);
+    std::vector<option::Option> buffer(stats.buffer_max);
+    option::Parser parse(true, usage, argc, argv, &options[0], &buffer[0]);
 
-    HelloWorldSubscriber mysub;
-    mysub.init(false);
-    HelloWorldPublisher mypub;
-    if (mypub.init(false))
+    try
     {
-        mysub.run([&mypub](uint16_t from, uint16_t to, uint64_t index, const std::vector<char>& data){
-            mypub.listen(from, to, index, data);
-        });
-        std::this_thread::sleep_for(std::chrono::milliseconds(4000));
-        mypub.run(count, sleep);
+        if (parse.error())
+        {
+            throw 1;
+        }
+
+        if (options[HELP] || options[UNKNOWN_OPT])
+        {
+            throw 1;
+        }
+
+        // For backward compatibility count and sleep may be given positionally
+        if (parse.nonOptionsCount() > 3 || parse.nonOptionsCount() == 0)
+        {
+            throw 2;
+        }
+
+        // Decide between publisher or subscriber
+        const char* type_name = parse.nonOption(0);
+
+        // make sure is the first option.
+        // type_name and buffer[0].name reference the original command line char array
+        // type_name must precede any other arguments in the array.
+        // Note buffer[0].arg may be null for non-valued options and is not reliable for
+        // testing purposes.
+        if (parse.optionsCount() && type_name >= buffer[0].name)
+        {
+            throw 2;
+        }
+
+        if (strcmp(type_name, "publisher") == 0)
+        {
+            type = 1;
+        }
+        else if (strcmp(type_name, "subscriber") == 0)
+        {
+            type = 2;
+        }
+        else
+        {
+            throw 2;
+        }
+    }
+    catch (int error)
+    {
+        if ( error == 2 )
+        {
+            std::cerr << "ERROR: first argument must be <publisher|subscriber> followed by - or -- options"
+                      << std::endl;
+        }
+        option::printUsage(fwrite, stdout, usage, columns);
+        return error;
+    }
+
+    // Decide between the old and new syntax
+    if (parse.nonOptionsCount() > 1)
+    {
+        // old syntax, only affects publishers
+        // old and new syntax cannot be mixed
+        if (type != 1 || parse.optionsCount() > 0)
+        {
+            option::printUsage(fwrite, stdout, usage, columns);
+            return 1;
+        }
+
+        count = atoi(parse.nonOption(1));
+
+        if (parse.nonOptionsCount() == 3)
+        {
+            sleep = 0;
+        }
+    }
+    else
+    {
+        // new syntax
+        option::Option* opt = options[SAMPLES];
+        if (opt)
+        {
+            count = strtol(opt->arg, nullptr, 10);
+        }
+
+        opt = options[INTERVAL];
+        if (opt)
+        {
+            sleep = strtol(opt->arg, nullptr, 10);
+        }
+
+        opt = options[ENVIRONMENT];
+        if (opt)
+        {
+            use_environment_qos = true;
+        }
+    }
+
+    switch (type)
+    {
+        case 1:
+        {
+            HelloWorldPublisher mypub;
+            if (mypub.init(use_environment_qos))
+            {
+                mypub.run(count, sleep);
+            }
+            break;
+        }
+        case 2:
+        {
+            HelloWorldSubscriber mysub;
+            if (mysub.init(use_environment_qos))
+            {
+                mysub.run();
+            }
+            break;
+        }
     }
     Log::Reset();
     return 0;

@@ -17,40 +17,32 @@ cmake_minimum_required(VERSION 3.16.3)
 project(DDSHelloWorldExample VERSION 1 LANGUAGES CXX)
 
 # Find requirements
-if (NOT fastcdr_FOUND)
+if(NOT fastcdr_FOUND)
     find_package(fastcdr REQUIRED)
-endif ()
+endif()
 
-if (NOT fastrtps_FOUND)
+if(NOT fastrtps_FOUND)
     find_package(fastrtps REQUIRED)
-endif ()
+endif()
 
 #Check C++11
 include(CheckCXXCompilerFlag)
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     check_cxx_compiler_flag(-std=c++11 SUPPORTS_CXX11)
-    if (NOT SUPPORTS_CXX11)
+    if(NOT SUPPORTS_CXX11)
         message(FATAL_ERROR "Compiler doesn't support C++11")
-    endif ()
-endif ()
+    endif()
+endif()
 
 message(STATUS "Configuring HelloWorld example...")
 file(GLOB DDS_HELLOWORLD_EXAMPLE_SOURCES_CXX "*.cxx")
 file(GLOB DDS_HELLOWORLD_EXAMPLE_SOURCES_CPP "*.cpp")
 
-if (${Server})
-    add_compile_definitions(Server)
-elseif (${Hub})
-    add_compile_definitions(Hub)
-elseif (${Client})
-    add_compile_definitions(Client)
-endif ()
-
 add_executable(DDSHelloWorldExample ${DDS_HELLOWORLD_EXAMPLE_SOURCES_CXX} ${DDS_HELLOWORLD_EXAMPLE_SOURCES_CPP})
 target_compile_definitions(DDSHelloWorldExample PRIVATE
-        $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL: "${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
-        $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
-        )
+    $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
+    $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
+)
 target_link_libraries(DDSHelloWorldExample fastrtps fastcdr fastdds::optionparser)
 install(TARGETS DDSHelloWorldExample
-        RUNTIME DESTINATION examples/cpp/dds/HelloWorldExample/${BIN_INSTALL_DIR})
+    RUNTIME DESTINATION examples/cpp/dds/HelloWorldExample/${BIN_INSTALL_DIR})

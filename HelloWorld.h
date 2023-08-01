@@ -143,68 +143,30 @@ public:
     eProsima_user_DllExport uint32_t& index();
 
     /*!
-     * @brief This function sets a value in member from
-     * @param _from New value for member from
-     */
-    eProsima_user_DllExport void from(
-            uint16_t _from);
-
-    /*!
-     * @brief This function returns the value of member from
-     * @return Value of member from
-     */
-    eProsima_user_DllExport uint16_t from() const;
-
-    /*!
-     * @brief This function returns a reference to member from
-     * @return Reference to member from
-     */
-    eProsima_user_DllExport uint16_t& from();
-
-    /*!
-     * @brief This function sets a value in member to
-     * @param _to New value for member to
-     */
-    eProsima_user_DllExport void to(
-            uint16_t _to);
-
-    /*!
-     * @brief This function returns the value of member to
-     * @return Value of member to
-     */
-    eProsima_user_DllExport uint16_t to() const;
-
-    /*!
-     * @brief This function returns a reference to member to
-     * @return Reference to member to
-     */
-    eProsima_user_DllExport uint16_t& to();
-
-    /*!
      * @brief This function copies the value in member message
      * @param _message New value to be copied in member message
      */
     eProsima_user_DllExport void message(
-            const std::vector<char>& _message);
+            const std::string& _message);
 
     /*!
      * @brief This function moves the value in member message
      * @param _message New value to be moved in member message
      */
     eProsima_user_DllExport void message(
-            std::vector<char>&& _message);
+            std::string&& _message);
 
     /*!
      * @brief This function returns a constant reference to member message
      * @return Constant reference to member message
      */
-    eProsima_user_DllExport const std::vector<char>& message() const;
+    eProsima_user_DllExport const std::string& message() const;
 
     /*!
      * @brief This function returns a reference to member message
      * @return Reference to member message
      */
-    eProsima_user_DllExport std::vector<char>& message();
+    eProsima_user_DllExport std::string& message();
 
     /*!
      * @brief This function returns the maximum serialized size of an object
@@ -266,9 +228,7 @@ public:
 private:
 
     uint32_t m_index;
-    uint16_t m_from;
-    uint16_t m_to;
-    std::vector<char> m_message;
+    std::string m_message;
 };
 
 #endif // _FAST_DDS_GENERATED_HELLOWORLD_H_

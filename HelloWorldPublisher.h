@@ -47,9 +47,6 @@ public:
             uint32_t number,
             uint32_t sleep);
 
-    //!Listen from other nodes
-    void listen(uint16_t from, uint16_t to, uint64_t index, const std::vector<char> &data);
-
 private:
 
     HelloWorld hello_;
@@ -59,8 +56,10 @@ private:
     eprosima::fastdds::dds::Publisher* publisher_;
 
     eprosima::fastdds::dds::Topic* topic_;
+    eprosima::fastdds::dds::Topic* topic1_;
 
     eprosima::fastdds::dds::DataWriter* writer_;
+    eprosima::fastdds::dds::DataWriter* writer1_;
 
     bool stop_;
 
@@ -86,7 +85,7 @@ private:
 
         bool firstConnected_;
     }
-    listener_;
+    listener_, listener1_;
 
     void runThread(
             uint32_t number,
