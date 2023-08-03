@@ -36,15 +36,21 @@ using namespace eprosima::fastcdr::exception;
 
 HelloWorld::HelloWorld()
 {
-    // m_index com.eprosima.idl.parser.typecode.PrimitiveTypeCode@627551fb
+    // m_index com.eprosima.idl.parser.typecode.PrimitiveTypeCode@393671df
     m_index = 0;
-    // m_message com.eprosima.idl.parser.typecode.StringTypeCode@2758fe70
-    m_message ="";
+    // m_triggerId com.eprosima.idl.parser.typecode.PrimitiveTypeCode@56620197
+    m_triggerId = 0;
+    // m_workerId com.eprosima.idl.parser.typecode.PrimitiveTypeCode@6eda5c9
+    m_workerId = 0;
+    // m_message com.eprosima.idl.parser.typecode.SequenceTypeCode@55b7a4e0
+
 
 }
 
 HelloWorld::~HelloWorld()
 {
+
+
 
 
 }
@@ -53,6 +59,8 @@ HelloWorld::HelloWorld(
         const HelloWorld& x)
 {
     m_index = x.m_index;
+    m_triggerId = x.m_triggerId;
+    m_workerId = x.m_workerId;
     m_message = x.m_message;
 }
 
@@ -60,6 +68,8 @@ HelloWorld::HelloWorld(
         HelloWorld&& x) noexcept 
 {
     m_index = x.m_index;
+    m_triggerId = x.m_triggerId;
+    m_workerId = x.m_workerId;
     m_message = std::move(x.m_message);
 }
 
@@ -68,6 +78,8 @@ HelloWorld& HelloWorld::operator =(
 {
 
     m_index = x.m_index;
+    m_triggerId = x.m_triggerId;
+    m_workerId = x.m_workerId;
     m_message = x.m_message;
 
     return *this;
@@ -78,6 +90,8 @@ HelloWorld& HelloWorld::operator =(
 {
 
     m_index = x.m_index;
+    m_triggerId = x.m_triggerId;
+    m_workerId = x.m_workerId;
     m_message = std::move(x.m_message);
 
     return *this;
@@ -87,7 +101,7 @@ bool HelloWorld::operator ==(
         const HelloWorld& x) const
 {
 
-    return (m_index == x.m_index && m_message == x.m_message);
+    return (m_index == x.m_index && m_triggerId == x.m_triggerId && m_workerId == x.m_workerId && m_message == x.m_message);
 }
 
 bool HelloWorld::operator !=(
@@ -105,7 +119,17 @@ size_t HelloWorld::getMaxCdrSerializedSize(
     current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
 
 
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + 255 + 1;
+    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
+
+
+    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
+
+
+    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
+
+    current_alignment += (100 * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
+
+
 
 
     return current_alignment - initial_alignment;
@@ -122,7 +146,20 @@ size_t HelloWorld::getCdrSerializedSize(
     current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
 
 
-    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.message().size() + 1;
+    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
+
+
+    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
+
+
+    current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4);
+
+    if (data.message().size() > 0)
+    {
+        current_alignment += (data.message().size() * 1) + eprosima::fastcdr::Cdr::alignment(current_alignment, 1);
+    }
+
+
 
 
     return current_alignment - initial_alignment;
@@ -133,7 +170,9 @@ void HelloWorld::serialize(
 {
 
     scdr << m_index;
-    scdr << m_message.c_str();
+    scdr << m_triggerId;
+    scdr << m_workerId;
+    scdr << m_message;
 
 }
 
@@ -142,6 +181,8 @@ void HelloWorld::deserialize(
 {
 
     dcdr >> m_index;
+    dcdr >> m_triggerId;
+    dcdr >> m_workerId;
     dcdr >> m_message;
 }
 
@@ -174,11 +215,67 @@ uint32_t& HelloWorld::index()
 }
 
 /*!
+ * @brief This function sets a value in member triggerId
+ * @param _triggerId New value for member triggerId
+ */
+void HelloWorld::triggerId(
+        uint32_t _triggerId)
+{
+    m_triggerId = _triggerId;
+}
+
+/*!
+ * @brief This function returns the value of member triggerId
+ * @return Value of member triggerId
+ */
+uint32_t HelloWorld::triggerId() const
+{
+    return m_triggerId;
+}
+
+/*!
+ * @brief This function returns a reference to member triggerId
+ * @return Reference to member triggerId
+ */
+uint32_t& HelloWorld::triggerId()
+{
+    return m_triggerId;
+}
+
+/*!
+ * @brief This function sets a value in member workerId
+ * @param _workerId New value for member workerId
+ */
+void HelloWorld::workerId(
+        uint32_t _workerId)
+{
+    m_workerId = _workerId;
+}
+
+/*!
+ * @brief This function returns the value of member workerId
+ * @return Value of member workerId
+ */
+uint32_t HelloWorld::workerId() const
+{
+    return m_workerId;
+}
+
+/*!
+ * @brief This function returns a reference to member workerId
+ * @return Reference to member workerId
+ */
+uint32_t& HelloWorld::workerId()
+{
+    return m_workerId;
+}
+
+/*!
  * @brief This function copies the value in member message
  * @param _message New value to be copied in member message
  */
 void HelloWorld::message(
-        const std::string& _message)
+        const std::vector<char>& _message)
 {
     m_message = _message;
 }
@@ -188,7 +285,7 @@ void HelloWorld::message(
  * @param _message New value to be moved in member message
  */
 void HelloWorld::message(
-        std::string&& _message)
+        std::vector<char>&& _message)
 {
     m_message = std::move(_message);
 }
@@ -197,7 +294,7 @@ void HelloWorld::message(
  * @brief This function returns a constant reference to member message
  * @return Constant reference to member message
  */
-const std::string& HelloWorld::message() const
+const std::vector<char>& HelloWorld::message() const
 {
     return m_message;
 }
@@ -206,7 +303,7 @@ const std::string& HelloWorld::message() const
  * @brief This function returns a reference to member message
  * @return Reference to member message
  */
-std::string& HelloWorld::message()
+std::vector<char>& HelloWorld::message()
 {
     return m_message;
 }
@@ -215,6 +312,8 @@ size_t HelloWorld::getKeyMaxCdrSerializedSize(
         size_t current_alignment)
 {
     size_t current_align = current_alignment;
+
+
 
 
 
@@ -232,5 +331,5 @@ void HelloWorld::serializeKey(
         eprosima::fastcdr::Cdr& scdr) const
 {
     (void) scdr;
-      
+        
 }

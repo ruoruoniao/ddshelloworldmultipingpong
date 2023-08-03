@@ -143,30 +143,68 @@ public:
     eProsima_user_DllExport uint32_t& index();
 
     /*!
+     * @brief This function sets a value in member triggerId
+     * @param _triggerId New value for member triggerId
+     */
+    eProsima_user_DllExport void triggerId(
+            uint32_t _triggerId);
+
+    /*!
+     * @brief This function returns the value of member triggerId
+     * @return Value of member triggerId
+     */
+    eProsima_user_DllExport uint32_t triggerId() const;
+
+    /*!
+     * @brief This function returns a reference to member triggerId
+     * @return Reference to member triggerId
+     */
+    eProsima_user_DllExport uint32_t& triggerId();
+
+    /*!
+     * @brief This function sets a value in member workerId
+     * @param _workerId New value for member workerId
+     */
+    eProsima_user_DllExport void workerId(
+            uint32_t _workerId);
+
+    /*!
+     * @brief This function returns the value of member workerId
+     * @return Value of member workerId
+     */
+    eProsima_user_DllExport uint32_t workerId() const;
+
+    /*!
+     * @brief This function returns a reference to member workerId
+     * @return Reference to member workerId
+     */
+    eProsima_user_DllExport uint32_t& workerId();
+
+    /*!
      * @brief This function copies the value in member message
      * @param _message New value to be copied in member message
      */
     eProsima_user_DllExport void message(
-            const std::string& _message);
+            const std::vector<char>& _message);
 
     /*!
      * @brief This function moves the value in member message
      * @param _message New value to be moved in member message
      */
     eProsima_user_DllExport void message(
-            std::string&& _message);
+            std::vector<char>&& _message);
 
     /*!
      * @brief This function returns a constant reference to member message
      * @return Constant reference to member message
      */
-    eProsima_user_DllExport const std::string& message() const;
+    eProsima_user_DllExport const std::vector<char>& message() const;
 
     /*!
      * @brief This function returns a reference to member message
      * @return Reference to member message
      */
-    eProsima_user_DllExport std::string& message();
+    eProsima_user_DllExport std::vector<char>& message();
 
     /*!
      * @brief This function returns the maximum serialized size of an object
@@ -228,7 +266,9 @@ public:
 private:
 
     uint32_t m_index;
-    std::string m_message;
+    uint32_t m_triggerId;
+    uint32_t m_workerId;
+    std::vector<char> m_message;
 };
 
 #endif // _FAST_DDS_GENERATED_HELLOWORLD_H_
